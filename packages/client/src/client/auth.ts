@@ -1796,11 +1796,17 @@ export async function discoverAuthorizationServerMetadata(
             );
         }
 
+        let responseJson: unknown;
+        try {
+            responseJson = await response.json();
+        } catch {
+            await response.body?.cancel().catch(() => {});
+            continue;
+        }
+
         // Parse and validate based on type
         const parsed =
-            type === 'oauth'
-                ? OAuthMetadataSchema.parse(await response.json())
-                : OpenIdProviderDiscoveryMetadataSchema.parse(await response.json());
+            type === 'oauth' ? OAuthMetadataSchema.parse(responseJson) : OpenIdProviderDiscoveryMetadataSchema.parse(responseJson);
 
         if (!skipIssuerValidation) {
             // RFC 8414 §3.3 / OIDC Discovery §4.3: the `issuer` value in the document MUST be

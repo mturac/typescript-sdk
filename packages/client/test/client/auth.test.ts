@@ -1058,6 +1058,27 @@ describe('OAuth Authorization', () => {
             expect(mockFetch).toHaveBeenCalledTimes(2);
         });
 
+        it('continues when a successful metadata response is not JSON', async () => {
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                status: 200,
+                json: async () => {
+                    throw new SyntaxError('Unexpected token < in JSON');
+                }
+            });
+
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                status: 200,
+                json: async () => validOpenIdMetadata
+            });
+
+            const metadata = await discoverAuthorizationServerMetadata('https://auth.example.com');
+
+            expect(metadata).toEqual(validOpenIdMetadata);
+            expect(mockFetch).toHaveBeenCalledTimes(2);
+        });
+
         it('throws on non-502 5xx errors', async () => {
             mockFetch.mockResolvedValueOnce({
                 ok: false,
